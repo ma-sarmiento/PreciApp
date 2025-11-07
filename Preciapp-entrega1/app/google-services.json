@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "949242653437",
+    "project_id": "preciapp-6b298",
+    "storage_bucket": "preciapp-6b298.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949242653437:android:941e676c016a0982acac94",
+        "android_client_info": {
+          "package_name": "com.example.proyecto_movil"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDty8_VClVuLw3MaToYtJ23Rt_oWCSJ9Ww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

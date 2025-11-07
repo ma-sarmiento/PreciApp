@@ -1,0 +1,8 @@
+<resources>
+    <!-- Avatar redondo -->
+    <style name="ShapeAppearanceOverlay.PresiApp.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    </resources>

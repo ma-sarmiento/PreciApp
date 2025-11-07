@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="#FFFFFFFF">
+
+    <!-- Miniatura del producto -->
+    <ImageView
+        android:id="@+id/product_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="centerCrop"
+        android:layout_marginEnd="12dp"
+        android:background="#E5E7EB" />
+
+    <!-- Nombre y precio -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/product_name_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre"
+            android:textStyle="bold"
+            android:textColor="#111827" />
+
+        <TextView
+            android:id="@+id/product_price_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$0.00"
+            android:textColor="#6B7280" />
+    </LinearLayout>
+
+    <!-- Eliminar -->
+    <ImageView
+        android:id="@+id/delete_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@android:drawable/ic_menu_delete"
+        app:tint="#EF4444" />
+</LinearLayout>

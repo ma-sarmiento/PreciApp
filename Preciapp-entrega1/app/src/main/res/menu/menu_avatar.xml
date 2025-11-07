@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_ver_perfil"
+        android:title="Ver perfil"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_notificaciones"
+        android:title="Notificaciones"
+        android:icon="@android:drawable/ic_dialog_email"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_config_cuenta"
+        android:title="Gestión de cuenta"
+        android:icon="@android:drawable/ic_menu_manage"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_logout"
+        android:title="Cerrar sesión" />
+</menu>

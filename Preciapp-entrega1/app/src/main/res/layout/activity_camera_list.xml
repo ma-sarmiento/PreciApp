@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F4EF">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- Barra superior -->
+        <LinearLayout
+            android:id="@+id/topBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="48dp">
+
+            <ImageView
+                android:id="@+id/ivBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_arrow_back" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cámara / Lista"
+                android:textColor="#101828"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp" />
+        </LinearLayout>
+
+        <!-- Icono grande y título -->
+        <ImageView
+            android:id="@+id/ivHeaderIcon"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_below="@id/topBar"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="18dp"
+            android:src="@drawable/ic_barcode"
+            app:tint="@color/purple_500" />
+
+        <TextView
+            android:id="@+id/tvScreenTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ivHeaderIcon"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="12dp"
+            android:text="Escanea tu producto"
+            android:textColor="#101828"
+            android:textStyle="bold"
+            android:textSize="20sp" />
+
+        <!-- Fila de acciones -->
+        <LinearLayout
+            android:id="@+id/actionsRow"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tvScreenTitle"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnScan"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Escanear"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                app:icon="@drawable/ic_camera"
+                app:iconTint="#FFFFFF"
+                app:iconPadding="8dp"
+                app:cornerRadius="16dp"
+                app:backgroundTint="@color/purple_500" />
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddManual"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:text="Agregar manual"
+                android:textAllCaps="false"
+                android:textColor="#111827"
+                app:icon="@drawable/ic_keyboard"
+                app:iconTint="#3B82F6"
+                app:iconPadding="8dp"
+                app:cornerRadius="16dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#1F2937"
+                app:backgroundTint="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Preview de la foto -->
+        <ImageView
+            android:id="@+id/ivPreview"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_below="@id/actionsRow"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFFFF"
+            android:padding="4dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Vista previa"
+            android:visibility="gone"
+            android:layout_marginStart="12dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Búsqueda -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilProduct"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/actionsRow"
+            android:layout_toStartOf="@id/ivPreview"
+            android:layout_alignParentStart="true"
+            android:layout_marginTop="18dp"
+            android:hint="Nombre del producto"
+            app:startIconDrawable="@drawable/ic_barcode"
+            app:startIconTint="@color/purple_500"
+            app:boxBackgroundColor="#FFFFFFFF"
+            app:boxStrokeColor="#E5E7EB"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProduct"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="14dp"
+                android:textColor="#101828"
+                android:textColorHint="#6B7280" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Lista -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tilProduct"
+            android:layout_marginTop="14dp"
+            android:clipToPadding="false"
+            android:paddingBottom="90dp"
+            tools:listitem="@layout/item_producto_busqueda" />
+
+        <!-- Barra de presupuesto -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/budgetBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/recyclerView"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:id="@+id/tvBudgetTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Presupuesto"
+                    android:textStyle="bold"
+                    android:textColor="#101828"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/tvPresupuesto"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="start"
+                        android:text="Total: $0" />
+
+                    <TextView
+                        android:id="@+id/tvGastado"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="Gastado: $0" />
+
+                    <TextView
+                        android:id="@+id/tvRestante"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="Restante: $0"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </RelativeLayout>
+</ScrollView>

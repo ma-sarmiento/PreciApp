@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="24dp">
+
+        <!-- Ícono (usamos uno del sistema para no depender de assets) -->
+        <ImageView
+            android:id="@+id/imageWallet"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_save"
+            android:contentDescription="Ícono billetera" />
+
+        <!-- Título -->
+        <TextView
+            android:id="@+id/textTitulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Definir presupuesto"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Subtítulo -->
+        <TextView
+            android:id="@+id/textSubtitulo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ingrese su presupuesto total"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Campo de presupuesto (sin bg custom) -->
+        <EditText
+            android:id="@+id/editTextPresupuesto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0.00"
+            android:inputType="numberDecimal"
+            android:padding="12dp"
+            android:textColor="@android:color/black"
+            android:textColorHint="#888888"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Botón Confirmar (Material) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonConfirmarPresupuesto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirmar"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="@android:color/white"
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="48dp"
+            app:cornerRadius="16dp"
+            app:backgroundTint="@color/purple_500" />
+
+        <!-- Botón volver -->
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:navigationIcon="@drawable/ic_arrow_back"
+            android:tint="@color/purple_500"
+            android:contentDescription="Botón regresar" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,0 +1,4 @@
+<resources>
+    <style name="Base.Theme.Proyecto_movil" parent="Theme.Material3.DayNight.NoActionBar"/>
+    <style name="Theme.Proyecto_movil" parent="Base.Theme.Proyecto_movil" />
+</resources>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F7F4EF">
+
+
+    <ImageView
+        android:id="@+id/avatarIcon"
+    android:layout_width="42dp"
+    android:layout_height="42dp"
+        android:layout_marginTop="48dp"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"
+    android:src="@drawable/avatar"
+    android:contentDescription="@string/avatar"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="4dp"
+    android:background="?attr/selectableItemBackgroundBorderless" />
+
+
+
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="100sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="48dp"
+        app:srcCompat="@drawable/carrito_de_compras" />
+
+    <!-- Título -->
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PresiApp"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#101828"
+        android:layout_below="@id/logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
+
+    <!-- Escanear producto -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonEscanearProducto"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/appName"
+        android:layout_marginTop="28dp"
+        android:text="Escanear producto"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_menu_camera"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+    <!-- Mi lista de productos -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonMiLista"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/buttonEscanearProducto"
+        android:layout_marginTop="14dp"
+        android:text="Mi lista de productos"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_menu_sort_by_size"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+    <!-- Comparar precios -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonCompararPrecios"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/buttonMiLista"
+        android:layout_marginTop="14dp"
+        android:text="Comparar precios"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_menu_compass"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+    <!-- Definir presupuesto -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonDefinirPresupuesto"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/buttonCompararPrecios"
+        android:layout_marginTop="14dp"
+        android:text="Definir presupuesto"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_dialog_info"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+    <!-- Ver ruta eficiente -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonVerRutaEficiente"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/buttonDefinirPresupuesto"
+        android:layout_marginTop="14dp"
+        android:text="Ver ruta eficiente"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_menu_directions"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+</RelativeLayout>

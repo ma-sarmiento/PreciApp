@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PresiApp</string>
+    <string name="avatar">Avatar</string>
+
+    <string name="scan_product">Escanear producto</string>
+    <string name="my_list">Mi lista de productos</string>
+    <string name="compare_prices">Comparar precios</string>
+    <string name="set_budget">Definir presupuesto</string>
+    <string name="efficient_route">Ver ruta eficiente</string>
+    <string name="edit_profile">Editar perfil</string>
+    <string name="profile_intro">Mantén la privacidad de tus datos personales. Cualquier usuario que pueda ver tu perfil puede ver la información que añades aquí.</string>
+    <string name="edit">Editar</string>
+    <string name="name">Nombre</string>
+    <string name="username">Nombre de usuario</string>
+    <string name="info">Info</string>
+    <string name="website">Sitio web</string>
+    <string name="pronouns">Pronombres</string>
+    <string name="done">Hecho</string>
+    <string name="view_profile_title">Ver perfil</string>
+    <string name="edit_profile_title">Editar perfil</string>
+
+        <!-- Pantalla Ver Perfil -->
+        <string name="title_ver_perfil">Editar perfil</string>
+        <string name="profile_privacy_hint">
+        Mantén la privacidad de tus datos personales. Cualquier usuario que pueda ver tu perfil puede ver la información que añades aquí.
+    </string>
+
+        <!-- Etiquetas / Hints -->
+        <string name="label_name">Nombre</string>
+        <string name="label_username">Nombre de usuario</string>
+        <string name="label_info">Info</string>
+        <string name="label_website">Sitio web</string>
+        <string name="label_pronouns">Pronombres</string>
+
+        <!-- Si en el layout pones hints explícitos, puedes usar estos -->
+        <string name="hint_name">Tu nombre</string>
+        <string name="hint_username">tu_usuario</string>
+        <string name="hint_info">Cuéntanos algo sobre ti…</string>
+        <string name="hint_website">https://tuweb.com</string>
+        <string name="hint_pronouns">ella / él / elle</string>
+
+        <!-- Botón bajo el avatar (si lo usas) -->
+        <string name="btn_edit_photo">Editar</string>
+    <string name="label_editar">Editar</string>
+    <string name="label_nombre">Nombre</string>
+    <string name="label_usuario">Nombre de usuario</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_done">Hecho</string>
+    <string name="cd_avatar">Foto de perfil</string>
+    <string name="cd_back">Atrás</string>
+    <string name="title_notificaciones">Notificaciones</string>
+    <string name="notif_hint">Controla qué te avisamos desde la app. Puedes cambiarlo en cualquier momento.</string>
+
+    <string name="notif_cat_general">General</string>
+    <string name="notif_master">Permitir notificaciones</string>
+    <string name="notif_master_sub">Si lo desactivas, se deshabilitan todos los avisos de la app.</string>
+
+    <string name="notif_cat_app">Preferencias de la app</string>
+    <string name="notif_push">Notificaciones push</string>
+    <string name="notif_push_sub">Alertas generales en tu dispositivo.</string>
+    <string name="notif_ofertas">Ofertas y descuentos</string>
+    <string name="notif_ofertas_sub">Promos cuando un producto baje de precio.</string>
+    <string name="notif_cambios_precio">Cambios de precio</string>
+    <string name="notif_cambios_precio_sub">Te avisamos si un producto sube o baja.</string>
+    <string name="notif_recordatorios">Recordatorios de compra</string>
+    <string name="notif_recordatorios_sub">Pendientes de tu lista o rutas programadas.</string>
+
+    <string name="title_gestion_cuenta">Gestión de la cuenta</string>
+    <string name="gestion_cuenta_hint">Modifica tu información personal o el tipo de cuenta.</string>
+    <string name="tu_cuenta">Tu cuenta</string>
+    <string name="info_personal">Información personal</string>
+    <string name="correo">Correo</string>
+    <string name="correo_demo">usuario@correo.com</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="cambiar_contrasena">Cambiar contraseña</string>
+    <string name="sonidos_app">Sonidos de la aplicación</string>
+    <string name="sonidos_de_la_app">Sonidos de la aplicación</string>
+    <string name="sonidos_sub">Activa los sonidos de la aplicación.</string>
+    <string name="desactivacion_y_eliminacion">Desactivación y eliminación</string>
+    <string name="desactivar_cuenta">Desactivar cuenta</string>
+    <string name="desactivar_sub">Oculta tus listas y tu perfil temporalmente.</string>
+    <string name="eliminar_datos_y_cuenta">Eliminar tus datos y cuenta</string>
+    <string name="eliminar_sub">Esta acción es permanente.</string>
+    <string name="cd_ir">Ir</string>
+
+    <!-- Botones / feedback -->
+    <string name="action_save">Guardar</string>
+    <string name="action_open_system">Ajustes del sistema</string>
+    <string name="saved_ok">Preferencias guardadas</string>
+
+        <!-- comunes -->
+        <string name="back">Atrás</string>
+
+        <!-- ManualProductActivity -->
+        <string name="manual_title">Agregar manual</string>
+        <string name="take_photo">Tomar foto</string>
+        <string name="photo_desc">Foto del producto</string>
+
+
+        <string name="hint_brand">Marca</string>
+        <string name="hint_category">Categoría</string>
+        <string name="hint_price_cop">Precio (COP)</string>
+
+        <string name="store_location_title">Ubicación de la tienda</string>
+        <string name="hint_store_name">Nombre de la tienda (ej. Tienda Don Pepe)</string>
+        <string name="hint_address">Dirección (opcional si eliges en el mapa)</string>
+        <string name="helper_address">Puedes escribir la dirección o elegir en el mapa</string>
+
+        <string name="choose_on_map">Elegir en mapa</string>
+        <string name="use_my_location">Usar mi ubicación</string>
+        <string name="no_location">Sin ubicación seleccionada</string>
+
+        <string name="save">Guardar</string>
+
+
+</resources>
+
+
+

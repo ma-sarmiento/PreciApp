@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F7F4EF"
+    tools:ignore="ExtraText">
+
+    <!-- Logo de la App (igual) -->
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="wrap_content"
+        android:layout_height="150sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        app:srcCompat="@drawable/carrito_de_compras" />
+
+    <!-- Título grande tipo mockup -->
+    <TextView
+        android:id="@+id/tvTituloApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PresiApp"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#101828"
+        android:layout_below="@id/logo"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp" />
+
+    <!-- Campo de Usuario (mismo id) -->
+    <EditText
+        android:id="@+id/editTextUsuario"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_below="@id/tvTituloApp"
+        android:layout_marginTop="28dp"
+        android:hint="Correo electrónico"
+        android:inputType="text"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:backgroundTint="#FFFFFF"
+        android:textColor="#101828"
+        android:textColorHint="#6B7280"
+        android:drawableStart="@android:drawable/ic_menu_myplaces"
+        android:drawablePadding="10dp" />
+
+    <!-- Campo de Contraseña (mismo id) -->
+    <EditText
+        android:id="@+id/editTextContraseña"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_below="@id/editTextUsuario"
+        android:layout_marginTop="14dp"
+        android:hint="Contraseña"
+        android:inputType="textPassword"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:backgroundTint="#FFFFFF"
+        android:textColor="#101828"
+        android:textColorHint="#6B7280"
+        android:drawableStart="@android:drawable/ic_lock_lock"
+        android:drawablePadding="10dp" />
+
+    <!-- Botón Iniciar sesión (MISMO ID) pero Material para estilo -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonIniciarSesion"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_below="@id/editTextContraseña"
+        android:layout_marginTop="20dp"
+        android:text="Iniciar sesión"
+        android:textAllCaps="false"
+        android:textStyle="bold"
+        android:textColor="#FFFFFFFF"
+        app:cornerRadius="12dp"
+        app:backgroundTint="@color/purple_500" />
+
+    <!-- Enlaces (mismo contenedor, ahora posicionado y centrado) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/buttonIniciarSesion"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/textViewOlvideContrasena"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Olvidé mi contraseña"
+            android:textColor="@color/purple_500"
+            android:textSize="14sp"
+            android:paddingEnd="20dp" />
+
+        <TextView
+            android:id="@+id/textViewRegistrarme"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Registrarme"
+            android:textColor="@color/purple_500"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</RelativeLayout>

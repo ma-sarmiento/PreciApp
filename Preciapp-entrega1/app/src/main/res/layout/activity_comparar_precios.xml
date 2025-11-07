@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootComparar"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F4EF"
+    android:fitsSystemWindows="true">
+
+    <!-- Top bar -->
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/ivBack"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="8dp"
+            android:text="Comparar precios"
+            android:textColor="#101828"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Buscador -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilQuery"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/topBar"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:hint="Categoría (p. ej. Leche)"
+        app:startIconDrawable="@drawable/ic_barcode"
+        app:startIconTint="@color/purple_500"
+        app:boxBackgroundColor="#FFFFFFFF"
+        app:boxStrokeColor="#E5E7EB"
+        app:boxStrokeWidth="1dp"
+        app:boxStrokeWidthFocused="2dp"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etQuery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="14dp"
+            android:textColor="#101828"
+            android:textColorHint="#6B7280" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Lista -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerComparar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/tilQuery"
+        android:layout_marginTop="12dp"
+        android:clipToPadding="false"
+        android:paddingBottom="96dp"
+        android:paddingHorizontal="16dp" />
+
+    <!-- Empty -->
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:text="Sin resultados para esta categoría."
+        android:textColor="#6B7280"
+        android:visibility="gone" />
+
+    <!-- FAB comparar -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabCompare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="16dp"
+        android:text="Comparar (0)"
+        android:visibility="gone" />
+</RelativeLayout>
