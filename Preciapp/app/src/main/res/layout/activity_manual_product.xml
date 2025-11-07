@@ -104,16 +104,19 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilCategoria"
+            android:id="@+id/til_categoria"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:hint="Categoría">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etCategoria"
-                android:hint="@string/hint_category"
+            <AutoCompleteTextView
+                android:id="@+id/actv_categoria"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:importantForAutofill="no"
+                android:dropDownHeight="300dp"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout

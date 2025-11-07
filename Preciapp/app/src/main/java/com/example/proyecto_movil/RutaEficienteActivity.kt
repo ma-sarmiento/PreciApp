@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
@@ -39,13 +40,13 @@ class RutaEficienteActivity : AppCompatActivity() {
     private lateinit var btnVerMapa: MaterialButton
     private lateinit var btnCompartir: MaterialButton
 
-    // Modelo de parada
+    // Modelo de parada (local a esta Activity)
     data class Stop(
         val title: String,
-        val subtitle: String,             // dirección “humana” o ayuda
-        val lat: Double? = null,          // si es manual
+        val subtitle: String,             // ayuda/dirección humana si aplica
+        val lat: Double? = null,          // definido si es producto manual con coordenadas
         val lng: Double? = null,
-        val searchQuery: String? = null,  // si es cadena: marca para buscar “cerca de mí”
+        val searchQuery: String? = null,  // para cadenas: término a buscar “cerca de mí”
         val productsCount: Int = 0
     )
 
@@ -72,7 +73,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         toolbar.title = "Ruta eficiente"
         toolbar.navigationIcon = AppCompatResources.getDrawable(this, R.drawable.ic_arrow_back)
-        toolbar.setNavigationOnClickListener { finish() }
+        toolbar.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed() }
         toolbar.setTitleTextColor(android.graphics.Color.BLACK)
         toolbar.navigationIcon?.setTint(android.graphics.Color.BLACK)
 
@@ -89,7 +90,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         adapter = TiendasAdapter()
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
-        adapter.submitList(emptyList()) // nada hasta cargar
+        adapter.submitList(emptyList())
 
         // Resumen / acciones
         cardResumen   = findViewById(R.id.cardResumen)
@@ -98,22 +99,43 @@ class RutaEficienteActivity : AppCompatActivity() {
         btnVerMapa    = findViewById(R.id.btnVerMapa)
         btnCompartir  = findViewById(R.id.btnCompartir)
 
-        // Estado inicial: oculto y deshabilitado → evita el “flash”
+        // Estado inicial
         cardResumen.visibility = View.GONE
         btnVerMapa.isEnabled = false
         btnCompartir.isEnabled = false
 
-        // Clicks
-        btnVerMapa.setOnClickListener { solicitarPermisosYabrirMaps() }
+        // Ver ruta embebida en la nueva pantalla del mapa
+        btnVerMapa.setOnClickListener {
+            if (stops.isEmpty()) {
+                Toast.makeText(this, "No hay paradas para mostrar.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            val bundles = ArrayList<Bundle>(stops.size)
+            for (s in stops) {
+                bundles += Bundle().apply {
+                    putString("title", s.title)
+                    putString("subtitle", s.subtitle)
+                    putDouble("lat", s.lat ?: Double.NaN)
+                    putDouble("lng", s.lng ?: Double.NaN)
+                    putString("searchQuery", s.searchQuery)
+                    putInt("productsCount", s.productsCount)
+                }
+            }
+            val i = Intent(this, MapaRutaActivity::class.java).apply {
+                putParcelableArrayListExtra("stops_bundles", bundles)
+            }
+            startActivity(i)
+        }
+
+        // Compartir (se mantiene tu flujo actual externo)
         btnCompartir.setOnClickListener { compartirRuta() }
 
-        // Cargar paradas reales desde la lista
+        // Cargar paradas reales desde Firebase
         cargarParadasDesdeLista()
     }
 
     /* --------------------- Firebase: armar paradas --------------------- */
     private fun cargarParadasDesdeLista() {
-        // Mientras carga: oculto/deshabilitado
         cardResumen.visibility = View.GONE
         btnVerMapa.isEnabled = false
         btnCompartir.isEnabled = false
@@ -136,7 +158,7 @@ class RutaEficienteActivity : AppCompatActivity() {
 
                         val nombre = prod.child("nombre").getValue(String::class.java).orEmpty()
                         val marca  = prod.child("marca").getValue(String::class.java).orEmpty()
-                        val storeName = prod.child("storeName").getValue(String::class.java) // puede no existir
+                        val storeName = prod.child("storeName").getValue(String::class.java)
                         val address = prod.child("address").getValue(String::class.java)
                         val lat = prod.child("lat").getValue(Double::class.java)
                         val lng = prod.child("lng").getValue(Double::class.java)
@@ -160,7 +182,7 @@ class RutaEficienteActivity : AppCompatActivity() {
                                 prev.copy(productsCount = prev.productsCount + qty)
                             }
                         } else {
-                            // Global / catálogo → usar marca
+                            // Catálogo / cadena → usar marca/nombre como cadena para buscar sede más cercana
                             val titulo = marca.ifBlank { nombre.ifBlank { "Cadena" } }
                             val prev = globalMap[titulo]
                             globalMap[titulo] = if (prev == null) {
@@ -181,10 +203,8 @@ class RutaEficienteActivity : AppCompatActivity() {
                     stops = (globalMap.values + manualMap.values).toList()
                     totalProducts = productos
 
-                    // Pinta lista
                     adapter.submitList(stops)
 
-                    // Actualiza resumen o lo oculta si no hay nada
                     if (stops.isEmpty()) {
                         cardResumen.visibility = View.GONE
                         btnVerMapa.isEnabled = false
@@ -198,7 +218,6 @@ class RutaEficienteActivity : AppCompatActivity() {
                     }
                 }
                 override fun onCancelled(error: DatabaseError) {
-                    // ante error, mantenemos oculto
                     cardResumen.visibility = View.GONE
                     btnVerMapa.isEnabled = false
                     btnCompartir.isEnabled = false
@@ -207,7 +226,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         }
     }
 
-    /* --------------------- Permisos + Maps --------------------- */
+    /* --------------------- (Se conserva) Permisos + Google Maps externo --------------------- */
     private fun solicitarPermisosYabrirMaps() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
         val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -225,8 +244,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         if (stops.isEmpty()) return
 
         val buildDestOrWp: (Stop) -> String = { s ->
-            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}"
-            else Uri.encode(s.searchQuery ?: s.title)
+            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}" else Uri.encode(s.searchQuery ?: s.title)
         }
 
         val openWithUrl: (String) -> Unit = { url ->
@@ -329,12 +347,10 @@ class RutaEficienteActivity : AppCompatActivity() {
             val t = getItem(pos)
             h.tvNombre.text = t.title
             h.tvDireccion.text = t.subtitle
-            // usamos el chip para mostrar cuántos productos hay en esa parada
-            h.chipTiempo.text = "x${t.productsCount}"
-            h.avatar.text = t.title.firstOrNull()?.uppercase() ?: "?"
+            h.chipTiempo.text = "x${t.productsCount}" // productos en esa parada
+            h.avatar.text = t.title.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
         }
     }
 }
-
 
 

@@ -106,7 +106,7 @@
             android:id="@+id/btnVerMapa"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ver ruta en Google Maps"
+            android:text="Ver ruta"
             app:icon="@android:drawable/ic_menu_directions"
             app:iconPadding="8dp"
             app:iconGravity="textStart"

@@ -68,6 +68,10 @@
         <activity
             android:name=".MapPickerActivity"
             android:exported="false" />
+        <activity
+            android:name=".MapaRutaActivity"
+            android:exported="false" />
+
 
     </application>
 

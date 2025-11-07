@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +16,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import java.io.File
 
 class ManualProductActivity : AppCompatActivity() {
@@ -24,7 +26,7 @@ class ManualProductActivity : AppCompatActivity() {
     private lateinit var ivFoto: ImageView
     private lateinit var etNombre: TextInputEditText
     private lateinit var etMarca: TextInputEditText
-    private lateinit var etCategoria: TextInputEditText
+    private lateinit var actvCategoria: MaterialAutoCompleteTextView
     private lateinit var etPrecio: TextInputEditText
     private lateinit var tvCantidad: TextView
     private lateinit var btnMenos: MaterialButton
@@ -82,26 +84,45 @@ class ManualProductActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_manual_product)
 
-        // refs
+        // Referencias UI
         ivBack = findViewById(R.id.ivBack)
         ivFoto = findViewById(R.id.ivFoto)
         etNombre = findViewById(R.id.etNombre)
         etMarca = findViewById(R.id.etMarca)
-        etCategoria = findViewById(R.id.etCategoria)
+        actvCategoria = findViewById(R.id.actv_categoria)
         etPrecio = findViewById(R.id.etPrecio)
         tvCantidad = findViewById(R.id.tvCantidad)
         btnMenos = findViewById(R.id.btnMenos)
         btnMas = findViewById(R.id.btnMas)
         btnTomarFoto = findViewById(R.id.btnTomarFoto)
         btnGuardar = findViewById(R.id.btnGuardar)
-
-        etNombreTienda = findViewById(R.id.etNombreTienda)   // si no existe en el XML, bórralo aquí y en el Intent
+        etNombreTienda = findViewById(R.id.etNombreTienda)
         etDireccion = findViewById(R.id.etDireccion)
         btnElegirEnMapa = findViewById(R.id.btnElegirEnMapa)
         tvCoords = findViewById(R.id.tvCoords)
 
         // Atrás
         ivBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+
+        // Configurar lista de categorías típicas de mercado
+        val categorias = listOf(
+            "Lácteos",
+            "Frutas",
+            "Verduras",
+            "Carnes",
+            "Abarrotes",
+            "Panadería",
+            "Bebidas",
+            "Aseo del hogar",
+            "Higiene personal",
+            "Cereales y granos",
+            "Enlatados",
+            "Snacks y dulces",
+            "Mascotas",
+            "Otros"
+        )
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, categorias)
+        actvCategoria.setAdapter(adapter)
 
         // Cantidad
         tvCantidad.text = cantidad.toString()
@@ -122,11 +143,11 @@ class ManualProductActivity : AppCompatActivity() {
             pickOnMap.launch(Intent(this, MapPickerActivity::class.java))
         }
 
-        // Guardar -> devolvemos datos al caller (CameraListActivity)
+        // Guardar producto
         btnGuardar.setOnClickListener {
             val nombre = etNombre.text?.toString()?.trim().orEmpty()
             val marca = etMarca.text?.toString()?.trim().takeUnless { it.isNullOrEmpty() } ?: "Manual"
-            val categoria = etCategoria.text?.toString()?.trim().takeUnless { it.isNullOrEmpty() } ?: "Otros"
+            val categoria = actvCategoria.text?.toString()?.trim().takeUnless { it.isNullOrEmpty() } ?: "Otros"
             val precioTxt = etPrecio.text?.toString()?.trim().orEmpty()
 
             if (nombre.isEmpty()) {
@@ -156,8 +177,6 @@ class ManualProductActivity : AppCompatActivity() {
                 putExtra("precio", precioLong)
                 putExtra("cantidad", cantidad)
                 putExtra("imageUri", photoUri?.toString())
-
-                // Ubicación / dirección (opcionales)
                 putExtra("lat", selLat ?: Double.NaN)
                 putExtra("lng", selLng ?: Double.NaN)
                 putExtra("address", address ?: "")
@@ -168,7 +187,7 @@ class ManualProductActivity : AppCompatActivity() {
         }
     }
 
-    /* ---------------- Helpers cámara ---------------- */
+    /* ---------------- Cámara ---------------- */
 
     private fun ensureCameraThenOpen() {
         val granted = ContextCompat.checkSelfPermission(
@@ -202,3 +221,4 @@ class ManualProductActivity : AppCompatActivity() {
     private fun snack(msg: String) =
         Snackbar.make(findViewById(android.R.id.content), msg, Snackbar.LENGTH_LONG).show()
 }
+
