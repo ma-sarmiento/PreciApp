@@ -22,21 +22,9 @@ PreciApp es una aplicación desarrollada como parte de la clase de Computación 
 
 Al ejecutar el código, la base de datos se poblará con información JSON. Sin la configuración de Firebase propia, la aplicación no podrá funcionar correctamente.
    
-## Integrantes
-
+---
 Para el desarrollo de este proyecto se trabajó en grupos de tres en esta clase. Quiero dar crédito a mis compañeros por las ideas y los aportes que hicieron, pero la mayor parte de la ejecución del código fue realizada por mí, Miguel Sarmiento, como principal Programador.
 
-Miguel Sarmiento:
-
-<img src="https://github.com/user-attachments/assets/4c67279a-14e0-426e-8b7f-8d5247ac0a6e" alt="Image" width="200"/>
-
-Johan Lopez:
-
-<img src="https://github.com/user-attachments/assets/03b25c24-1e68-468a-8421-c355575f30f7" alt="Image" width="200"/>
-
-Johann Berrio:
-
-<img src="https://github.com/user-attachments/assets/3da0e208-08fc-43aa-9477-4b21142d84e4" alt="Image" width="200"/>
-
+---
 ## Contribuciones
 Si deseas contribuir, puedes hacer un fork del repositorio, realizar tus cambios y enviar un pull request. Toda ayuda es bienvenida.
