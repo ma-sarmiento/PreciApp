@@ -8,11 +8,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- 📸 FEATURES opcionales -->
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+    <uses-feature android:name="android.hardware.vibrator" android:required="false" />
 
     <application
         android:name=".MyApp"
@@ -25,6 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Proyecto_movil"
         tools:targetApi="31">
+
 
         <!-- 🔑 Clave de Google Maps -->
         <meta-data

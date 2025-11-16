@@ -33,20 +33,20 @@ class RutaEficienteActivity : AppCompatActivity() {
     private lateinit var fused: FusedLocationProviderClient
     private lateinit var adapter: TiendasAdapter
 
-    // --- UI resumen / acciones ---
+    // --- UI ---
     private lateinit var cardResumen: View
     private lateinit var tvParadas: TextView
     private lateinit var tvProductos: TextView
     private lateinit var btnVerMapa: MaterialButton
     private lateinit var btnCompartir: MaterialButton
 
-    // Modelo de parada (local a esta Activity)
+    // Modelo local para las paradas
     data class Stop(
         val title: String,
-        val subtitle: String,             // ayuda/dirección humana si aplica
-        val lat: Double? = null,          // definido si es producto manual con coordenadas
+        val subtitle: String,
+        val lat: Double? = null,
         val lng: Double? = null,
-        val searchQuery: String? = null,  // para cadenas: término a buscar “cerca de mí”
+        val searchQuery: String? = null,
         val productsCount: Int = 0
     )
 
@@ -67,7 +67,7 @@ class RutaEficienteActivity : AppCompatActivity() {
 
         fused = LocationServices.getFusedLocationProviderClient(this)
 
-        // Toolbar
+        // --- Toolbar ---
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbarRuta)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -77,7 +77,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         toolbar.setTitleTextColor(android.graphics.Color.BLACK)
         toolbar.navigationIcon?.setTint(android.graphics.Color.BLACK)
 
-        // Insets para botones inferiores
+        // --- Insets para los botones ---
         val acciones = findViewById<View>(R.id.acciones)
         ViewCompat.setOnApplyWindowInsetsListener(acciones) { v, insets ->
             val bottom = insets.getInsets(WindowInsetsCompat.Type.systemGestures()).bottom
@@ -85,56 +85,30 @@ class RutaEficienteActivity : AppCompatActivity() {
             insets
         }
 
-        // Recycler
+        // --- Recycler ---
         val rv = findViewById<RecyclerView>(R.id.recyclerTiendas)
         adapter = TiendasAdapter()
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter
-        adapter.submitList(emptyList())
 
-        // Resumen / acciones
-        cardResumen   = findViewById(R.id.cardResumen)
-        tvParadas     = findViewById(R.id.tvParadas)
-        tvProductos   = findViewById(R.id.tvProductos)
-        btnVerMapa    = findViewById(R.id.btnVerMapa)
-        btnCompartir  = findViewById(R.id.btnCompartir)
+        // --- Resumen / botones ---
+        cardResumen = findViewById(R.id.cardResumen)
+        tvParadas = findViewById(R.id.tvParadas)
+        tvProductos = findViewById(R.id.tvProductos)
+        btnVerMapa = findViewById(R.id.btnVerMapa)
+        btnCompartir = findViewById(R.id.btnCompartir)
 
-        // Estado inicial
         cardResumen.visibility = View.GONE
         btnVerMapa.isEnabled = false
         btnCompartir.isEnabled = false
 
-        // Ver ruta embebida en la nueva pantalla del mapa
-        btnVerMapa.setOnClickListener {
-            if (stops.isEmpty()) {
-                Toast.makeText(this, "No hay paradas para mostrar.", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-            val bundles = ArrayList<Bundle>(stops.size)
-            for (s in stops) {
-                bundles += Bundle().apply {
-                    putString("title", s.title)
-                    putString("subtitle", s.subtitle)
-                    putDouble("lat", s.lat ?: Double.NaN)
-                    putDouble("lng", s.lng ?: Double.NaN)
-                    putString("searchQuery", s.searchQuery)
-                    putInt("productsCount", s.productsCount)
-                }
-            }
-            val i = Intent(this, MapaRutaActivity::class.java).apply {
-                putParcelableArrayListExtra("stops_bundles", bundles)
-            }
-            startActivity(i)
-        }
-
-        // Compartir (se mantiene tu flujo actual externo)
+        btnVerMapa.setOnClickListener { solicitarPermisosYabrirMaps() }
         btnCompartir.setOnClickListener { compartirRuta() }
 
-        // Cargar paradas reales desde Firebase
         cargarParadasDesdeLista()
     }
 
-    /* --------------------- Firebase: armar paradas --------------------- */
+    /* --------------------- Firebase: cargar paradas --------------------- */
     private fun cargarParadasDesdeLista() {
         cardResumen.visibility = View.GONE
         btnVerMapa.isEnabled = false
@@ -144,8 +118,8 @@ class RutaEficienteActivity : AppCompatActivity() {
         FirebaseRefs.currentItemsRefAsync { ref, _ ->
             ref.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(ds: DataSnapshot) {
-                    val manualMap = linkedMapOf<String, Stop>()
-                    val globalMap = linkedMapOf<String, Stop>()
+                    val mapManual = linkedMapOf<String, Stop>()
+                    val mapGlobal = linkedMapOf<String, Stop>()
                     var productos = 0
 
                     for (item in ds.children) {
@@ -155,21 +129,22 @@ class RutaEficienteActivity : AppCompatActivity() {
 
                         val prod = item.child("product")
                         val source = prod.child("source").getValue(String::class.java).orEmpty()
-
                         val nombre = prod.child("nombre").getValue(String::class.java).orEmpty()
-                        val marca  = prod.child("marca").getValue(String::class.java).orEmpty()
+                        val marca = prod.child("marca").getValue(String::class.java).orEmpty()
                         val storeName = prod.child("storeName").getValue(String::class.java)
+                        val storage = prod.child("storage").getValue(String::class.java)
                         val address = prod.child("address").getValue(String::class.java)
                         val lat = prod.child("lat").getValue(Double::class.java)
                         val lng = prod.child("lng").getValue(Double::class.java)
 
                         if (source == "manual" && lat != null && lng != null) {
-                            val titulo = storeName?.takeIf { it.isNotBlank() } ?: (nombre.ifBlank { "Tienda de barrio" })
+                            // Productos ingresados manualmente con coordenadas
+                            val titulo = storeName?.takeIf { it.isNotBlank() } ?: nombre.ifBlank { "Tienda local" }
                             val sub = address?.takeIf { it.isNotBlank() } ?: "Ubicación registrada por el usuario"
                             val key = "$titulo|$lat|$lng"
 
-                            val prev = manualMap[key]
-                            manualMap[key] = if (prev == null) {
+                            val prev = mapManual[key]
+                            mapManual[key] = if (prev == null) {
                                 Stop(
                                     title = titulo,
                                     subtitle = sub,
@@ -182,27 +157,32 @@ class RutaEficienteActivity : AppCompatActivity() {
                                 prev.copy(productsCount = prev.productsCount + qty)
                             }
                         } else {
-                            // Catálogo / cadena → usar marca/nombre como cadena para buscar sede más cercana
-                            val titulo = marca.ifBlank { nombre.ifBlank { "Cadena" } }
-                            val prev = globalMap[titulo]
-                            globalMap[titulo] = if (prev == null) {
+                            // 🏪 Productos de catálogo global → buscar siempre por storeName
+                            val tienda = when {
+                                !storeName.isNullOrBlank() -> storeName        // ✅ primero storeName
+                                !storage.isNullOrBlank()   -> storage          // (si algún día lo usas)
+                                !marca.isNullOrBlank()     -> marca
+                                else -> "Tienda genérica"
+                            }
+                            val prev = mapGlobal[tienda]
+                            mapGlobal[tienda] = if (prev == null) {
                                 Stop(
-                                    title = titulo,
-                                    subtitle = "Se buscará la sede más cercana",
+                                    title = tienda,
+                                    subtitle = "Se buscará la sede más cercana de $tienda",
                                     lat = null,
                                     lng = null,
-                                    searchQuery = titulo,
+                                    searchQuery = tienda,
                                     productsCount = qty
                                 )
                             } else {
                                 prev.copy(productsCount = prev.productsCount + qty)
                             }
                         }
+
                     }
 
-                    stops = (globalMap.values + manualMap.values).toList()
+                    stops = (mapGlobal.values + mapManual.values).toList()
                     totalProducts = productos
-
                     adapter.submitList(stops)
 
                     if (stops.isEmpty()) {
@@ -210,23 +190,22 @@ class RutaEficienteActivity : AppCompatActivity() {
                         btnVerMapa.isEnabled = false
                         btnCompartir.isEnabled = false
                     } else {
-                        tvParadas.text   = "🔴 Paradas: ${stops.size}"
-                        tvProductos.text = "🧺 Productos en la lista: $totalProducts"
+                        tvParadas.text = "🔴 Paradas: ${stops.size}"
+                        tvProductos.text = "🧺 Productos en lista: $totalProducts"
                         cardResumen.visibility = View.VISIBLE
                         btnVerMapa.isEnabled = true
                         btnCompartir.isEnabled = true
                     }
                 }
+
                 override fun onCancelled(error: DatabaseError) {
-                    cardResumen.visibility = View.GONE
-                    btnVerMapa.isEnabled = false
-                    btnCompartir.isEnabled = false
+                    Toast.makeText(this@RutaEficienteActivity, "Error cargando lista.", Toast.LENGTH_SHORT).show()
                 }
             })
         }
     }
 
-    /* --------------------- (Se conserva) Permisos + Google Maps externo --------------------- */
+    /* --------------------- Google Maps externo --------------------- */
     private fun solicitarPermisosYabrirMaps() {
         val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
         val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -244,7 +223,7 @@ class RutaEficienteActivity : AppCompatActivity() {
         if (stops.isEmpty()) return
 
         val buildDestOrWp: (Stop) -> String = { s ->
-            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}" else Uri.encode(s.searchQuery ?: s.title)
+            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}" else Uri.encode("${s.searchQuery ?: s.title} Bogotá")
         }
 
         val openWithUrl: (String) -> Unit = { url ->
@@ -254,69 +233,38 @@ class RutaEficienteActivity : AppCompatActivity() {
             )
         }
 
-        fun urlSinOrigen(): String {
-            return if (stops.size == 1) {
-                "https://www.google.com/maps/dir/?api=1" +
-                        "&destination=${buildDestOrWp(stops.first())}" +
-                        "&travelmode=driving"
-            } else {
-                val dest = buildDestOrWp(stops.last())
-                val wps = stops.dropLast(1).joinToString("|") { buildDestOrWp(it) }
-                "https://www.google.com/maps/dir/?api=1" +
-                        "&destination=$dest&waypoints=$wps&travelmode=driving"
-            }
-        }
-
-        if (sinOrigen) { openWithUrl(urlSinOrigen()); return }
-
-        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (fine != PackageManager.PERMISSION_GRANTED && coarse != PackageManager.PERMISSION_GRANTED) {
-            openWithUrl(urlSinOrigen()); return
-        }
-
-        try {
-            fused.lastLocation
-                .addOnSuccessListener { loc ->
-                    val url = if (loc != null) {
-                        if (stops.size == 1) {
-                            "https://www.google.com/maps/dir/?api=1" +
-                                    "&origin=${loc.latLng()}" +
-                                    "&destination=${buildDestOrWp(stops.first())}" +
-                                    "&travelmode=driving"
-                        } else {
-                            val dest = buildDestOrWp(stops.last())
-                            val wps = stops.dropLast(1).joinToString("|") { buildDestOrWp(it) }
-                            "https://www.google.com/maps/dir/?api=1" +
-                                    "&origin=${loc.latLng()}" +
-                                    "&destination=$dest&waypoints=$wps&travelmode=driving"
-                        }
-                    } else urlSinOrigen()
-                    openWithUrl(url)
-                }
-                .addOnFailureListener { openWithUrl(urlSinOrigen()) }
-        } catch (_: SecurityException) {
-            openWithUrl(urlSinOrigen())
-        }
-    }
-
-    private fun Location.latLng() = "${this.latitude},${this.longitude}"
-
-    private fun compartirRuta() {
-        if (stops.isEmpty()) return
-        val destOrWp: (Stop) -> String = { s ->
-            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}"
-            else Uri.encode(s.searchQuery ?: s.title)
-        }
         val url = if (stops.size == 1) {
             "https://www.google.com/maps/dir/?api=1" +
-                    "&destination=${destOrWp(stops.first())}&travelmode=driving"
+                    "&destination=${buildDestOrWp(stops.first())}" +
+                    "&travelmode=driving"
         } else {
-            val dest = destOrWp(stops.last())
-            val wps = stops.dropLast(1).joinToString("|") { destOrWp(it) }
+            val dest = buildDestOrWp(stops.last())
+            val wps = stops.dropLast(1).joinToString("|") { buildDestOrWp(it) }
             "https://www.google.com/maps/dir/?api=1" +
                     "&destination=$dest&waypoints=$wps&travelmode=driving"
         }
+
+        openWithUrl(url)
+    }
+
+    /* --------------------- Compartir ruta --------------------- */
+    private fun compartirRuta() {
+        if (stops.isEmpty()) return
+        val buildDestOrWp: (Stop) -> String = { s ->
+            if (s.lat != null && s.lng != null) "${s.lat},${s.lng}"
+            else Uri.encode("${s.searchQuery ?: s.title} Bogotá")
+        }
+
+        val url = if (stops.size == 1) {
+            "https://www.google.com/maps/dir/?api=1" +
+                    "&destination=${buildDestOrWp(stops.first())}&travelmode=driving"
+        } else {
+            val dest = buildDestOrWp(stops.last())
+            val wps = stops.dropLast(1).joinToString("|") { buildDestOrWp(it) }
+            "https://www.google.com/maps/dir/?api=1" +
+                    "&destination=$dest&waypoints=$wps&travelmode=driving"
+        }
+
         val i = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, "🛒 Mi ruta eficiente: $url")
@@ -327,7 +275,7 @@ class RutaEficienteActivity : AppCompatActivity() {
     /* --------------------- Adapter --------------------- */
     class TiendasAdapter :
         ListAdapter<Stop, TiendasAdapter.VH>(object : DiffUtil.ItemCallback<Stop>() {
-            override fun areItemsTheSame(o: Stop, n: Stop) = o.title == n.title && o.subtitle == n.subtitle
+            override fun areItemsTheSame(o: Stop, n: Stop) = o.title == n.title
             override fun areContentsTheSame(o: Stop, n: Stop) = o == n
         }) {
 
@@ -339,7 +287,8 @@ class RutaEficienteActivity : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_tienda_pretty, parent, false)
+            val v = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_tienda_pretty, parent, false)
             return VH(v)
         }
 
@@ -347,10 +296,11 @@ class RutaEficienteActivity : AppCompatActivity() {
             val t = getItem(pos)
             h.tvNombre.text = t.title
             h.tvDireccion.text = t.subtitle
-            h.chipTiempo.text = "x${t.productsCount}" // productos en esa parada
+            h.chipTiempo.text = "x${t.productsCount}"
             h.avatar.text = t.title.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
         }
     }
 }
+
 
 

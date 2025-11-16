@@ -39,8 +39,38 @@ class ListaProductosActivity : AppCompatActivity() {
 
         // ⬇️ Pasamos el callback para borrar por posición
         adapter = ProductAdapter(
-            productosLocal,
-            onDeleteAt = { pos -> borrarItemEnFirebase(pos) }
+            items = productosLocal,
+            onDeleteAt = { pos -> borrarItemEnFirebase(pos) },
+            onItemClick = { product ->
+                // ✅ Cuando el usuario toca un producto del listado o buscador:
+                val catalogProduct = CatalogProduct(
+                    nombre = product.name,
+                    marca = "Genérico",  // puedes reemplazar si tienes un campo brand
+                    categoria = "Sin categoría",
+                    precio = product.price.toLong(),
+                    imageUri = product.imageUri,
+                    storeName = "Tienda Genérica", // 👈 o usa product.storeName si lo tienes
+                    source = "catalog_search"
+                )
+
+                FirebaseRefs.currentItemsRefAsync { ref, _ ->
+                    // agrega al carrito o incrementa cantidad si ya existe
+                    val push = ref.push()
+                    val itemMap = mapOf(
+                        "product" to mapOf(
+                            "nombre" to catalogProduct.nombre,
+                            "marca" to catalogProduct.marca,
+                            "categoria" to catalogProduct.categoria,
+                            "precio" to catalogProduct.precio,
+                            "imageUri" to catalogProduct.imageUri,
+                            "storeName" to catalogProduct.storeName,
+                            "source" to catalogProduct.source
+                        ),
+                        "qty" to 1
+                    )
+                    push.setValue(itemMap)
+                }
+            }
         )
         recycler.adapter = adapter
 

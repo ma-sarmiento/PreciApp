@@ -6,6 +6,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,10 +23,13 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.database.*
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+import org.json.JSONObject
+
+
 
 class CameraListActivity : AppCompatActivity() {
 
@@ -47,13 +54,22 @@ class CameraListActivity : AppCompatActivity() {
             val lat = d.getDoubleExtra("lat", Double.NaN)
             val lng = d.getDoubleExtra("lng", Double.NaN)
             val address = d.getStringExtra("address").orEmpty()
+            val storeName = d.getStringExtra("storeName") ?: "D1"
 
-            val prod = CatalogProduct(nombre, marca, cat, precio, uri)
+            val prod = CatalogProduct(
+                nombre = nombre,
+                marca = marca,
+                categoria = cat,
+                precio = precio,
+                imageUri = uri,
+                lat = if (!lat.isNaN()) lat else null,
+                lng = if (!lng.isNaN()) lng else null,
+                address = address,
+                storeName = storeName,
+                source = "manual"
+            )
 
-            // ✅ 1) Guardar/actualizar el producto en el catálogo PRIVADO del usuario
             FirebaseRefs.saveMyCatalogProduct(prod)
-
-            // ✅ 2) Añadir al carrito (solo cantidades)
             upsertQtyInCart(
                 prod,
                 targetQty = (cantidades[clave(prod)] ?: 0) + cant,
@@ -85,24 +101,46 @@ class CameraListActivity : AppCompatActivity() {
     private val takePicture = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            val ts = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-            val prod = CatalogProduct(
-                nombre = "Producto escaneado $ts",
-                marca = "Cámara",
-                categoria = "Otros",
-                precio = 0L,
-                imageUri = photoUri?.toString()
-            )
-            upsertQtyInCart(
-                prod,
-                targetQty = (cantidades[clave(prod)] ?: 0) + 1,
-                source = "camera"
-            )
-        } else {
-            Snackbar.make(recycler, "Captura cancelada", Snackbar.LENGTH_SHORT).show()
+        if (!success) {
+            Snackbar.make(recycler, "📷 Captura cancelada", Snackbar.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        try {
+            val bitmap = android.provider.MediaStore.Images.Media.getBitmap(contentResolver, photoUri)
+            BarcodeScannerUtil.scan(bitmap) { code ->
+                if (code == null) {
+                    Snackbar.make(recycler, "⚠️ No se detectó código de barras.", Snackbar.LENGTH_LONG).show()
+                    return@scan
+                }
+
+                // ✅ Vibración corta segura al detectar el código
+                try {
+                    val vibrator: Vibrator? = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                        val vm = getSystemService(android.os.VibratorManager::class.java)
+                        vm?.defaultVibrator
+                    } else {
+                        @Suppress("DEPRECATION")
+                        getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+                    }
+                    if (vibrator?.hasVibrator() == true) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            vibrator.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE))
+                        } else {
+                            @Suppress("DEPRECATION")
+                            vibrator.vibrate(150)
+                        }
+                    }
+                } catch (_: SecurityException) {
+                    // Sin permiso VIBRATE o dispositivo sin vibrador → ignora
+                } catch (_: Throwable) { }
+
+                buscarProductoPorCodigo(code)
+            }
+        } catch (e: Exception) {
+            Snackbar.make(recycler, "Error procesando la imagen: ${e.message}", Snackbar.LENGTH_LONG).show()
         }
     }
+
 
     /* -------------------- dinero / carrito -------------------- */
     private val nf = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
@@ -126,14 +164,13 @@ class CameraListActivity : AppCompatActivity() {
     private var itemsListener: ValueEventListener? = null
     private var itemsRef: DatabaseReference? = null
 
+    /* ==================== CICLO DE VIDA ==================== */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera_list)
 
-        // Warmup de caché (catálogo global, lista actual y catálogo privado)
         FirebaseRefs.warmupKeepSynced()
 
-        // UI
         recycler = findViewById(R.id.recyclerView)
         tvPresupuesto = findViewById(R.id.tvPresupuesto)
         tvGastado = findViewById(R.id.tvGastado)
@@ -144,29 +181,40 @@ class CameraListActivity : AppCompatActivity() {
         ivBack = findViewById(R.id.ivBack)
         ivBack.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
-        // Presupuesto persistente
         presupuestoTotal = leerPresupuesto()
         tvPresupuesto.text = "Total: ${nf.format(presupuestoTotal)}"
         renderTotales()
 
-        // Recycler
         adapter = ProductosAdapter(
             onSumar = { p -> cambiarCantidad(p, +1) },
             onRestar = { p -> cambiarCantidad(p, -1) },
             getCantidad = { p -> cantidades[clave(p)] ?: 0 },
-            format = nf
+            format = nf,
+            onItemClick = { producto ->
+                // ✅ Este bloque asegura que siempre se incluya storeName al guardar
+                upsertQtyInCart(
+                    producto.copy(
+                        storeName = producto.storeName ?: "Tienda genérica",
+                        source = "catalog_search"
+                    ),
+                    (cantidades[clave(producto)] ?: 0) + 1
+                )
+
+                Snackbar.make(recycler, "🛒 Producto agregado: ${producto.nombre}", Snackbar.LENGTH_SHORT)
+                    .setBackgroundTint(0xFF4CAF50.toInt())
+                    .show()
+            }
         )
+
         recycler.layoutManager = LinearLayoutManager(this)
         recycler.adapter = adapter
         pushVisibles()
 
-        // Acciones
         btnScan.setOnClickListener { ensureCameraPermissionThenOpen() }
         btnAddManual.setOnClickListener {
             manualLauncher.launch(Intent(this, ManualProductActivity::class.java))
         }
 
-        // Búsqueda sobre catálogo combinado (global + privado)
         etBuscar.addTextChangedListener(object : android.text.TextWatcher {
             override fun afterTextChanged(s: android.text.Editable?) {}
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -175,10 +223,8 @@ class CameraListActivity : AppCompatActivity() {
             }
         })
 
-        // Escuchar catálogo global y catálogo privado del usuario
         attachCatalogListeners()
 
-        // Asegurar lista actual y escuchar items
         FirebaseRefs.currentItemsRefAsync { ref, _ ->
             itemsRef = ref
             attachItemsListener(ref)
@@ -192,11 +238,160 @@ class CameraListActivity : AppCompatActivity() {
         itemsListener?.let { itemsRef?.removeEventListener(it) }
     }
 
-    /* -------------------- Cámara -------------------- */
+    /* ==================== ESCANEO: FIREBASE + OPEN FOOD FACTS ==================== */
+    private fun buscarProductoPorCodigo(code: String) {
+        val catalogRef = FirebaseRefs.catalogRef()
+        catalogRef.child(code).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // 🔍 Extraer todos los campos correctamente del catálogo
+                    val nombre = snapshot.child("name").getValue(String::class.java).orEmpty()
+                    val marca = snapshot.child("brand").getValue(String::class.java).orEmpty()
+                    val categoria = snapshot.child("category").getValue(String::class.java).orEmpty()
+                    val precio = snapshot.child("price").getValue(Long::class.java) ?: 0L
+                    val imageUri = snapshot.child("imageUri").getValue(String::class.java)
+                    val storeName = snapshot.child("storeName").getValue(String::class.java) // ✅ aquí está la clave
+
+                    val prod = CatalogProduct(
+                        nombre = nombre,
+                        marca = marca,
+                        categoria = categoria,
+                        precio = precio,
+                        imageUri = imageUri,
+                        storeName = storeName,  // ✅ mantenerlo
+                        source = "scan"
+                    )
+
+                    // Agregar al carrito manteniendo storeName
+                    upsertQtyInCart(prod, (cantidades[clave(prod)] ?: 0) + 1, source = "scan")
+
+                    Snackbar.make(recycler, "✅ Producto encontrado: $nombre", Snackbar.LENGTH_LONG)
+                        .setBackgroundTint(0xFF4CAF50.toInt())
+                        .show()
+                } else {
+                    // Si no existe en catalog, intenta obtenerlo por API externa
+                    fetchProductoDesdeOpenFoodFacts(code)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {}
+        })
+    }
+
+
+    private fun fetchProductoDesdeOpenFoodFacts(barcode: String) {
+        Thread {
+            try {
+                val url = URL("https://world.openfoodfacts.org/api/v2/product/$barcode.json")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.connect()
+
+                val response = conn.inputStream.bufferedReader().use { it.readText() }
+                val json = JSONObject(response)
+                val status = json.optInt("status", 0)
+
+                if (status == 1) {
+                    val prodObj = json.getJSONObject("product")
+                    val nombre = prodObj.optString("product_name", "Producto sin nombre")
+                    val marca = prodObj.optString("brands", "Sin marca")
+                    val categoria = prodObj.optString("categories", "Otros")
+                    val imageUri = prodObj.optString("image_url", null)
+
+                    // 🏪 Asignar tienda base según categoría
+                    val tienda = when {
+                        categoria.contains("bebidas", true) -> "D1"
+                        categoria.contains("lácteos", true) -> "Éxito"
+                        categoria.contains("aseo", true) -> "Ara"
+                        categoria.contains("snack", true) -> "Carulla"
+                        else -> "Tienda Genérica"
+                    }
+
+                    runOnUiThread {
+                        // Solicitar el precio una sola vez
+                        val input = android.widget.EditText(this@CameraListActivity)
+                        input.inputType = android.text.InputType.TYPE_CLASS_NUMBER
+                        input.hint = "Ej: 3500"
+
+                        androidx.appcompat.app.AlertDialog.Builder(this@CameraListActivity)
+                            .setTitle("Precio del producto")
+                            .setMessage("Introduce el precio de $nombre")
+                            .setView(input)
+                            .setPositiveButton("Guardar") { _, _ ->
+                                val precio = input.text.toString().toLongOrNull() ?: 0L
+
+                                // Crear objeto del producto con todos los datos
+                                val nuevoProd = CatalogProduct(
+                                    nombre = nombre,
+                                    marca = marca,
+                                    categoria = categoria,
+                                    precio = precio,
+                                    imageUri = imageUri,
+                                    storeName = tienda,
+                                    source = "scan_api"
+                                )
+
+                                // 💾 Guardar el producto directamente en catalog/ global
+                                val catalogRef = FirebaseRefs.catalogRef()
+                                // Usamos el código de barras como clave global para evitar duplicados
+                                val nodeRef = catalogRef.child(barcode)
+                                val dataMap = mapOf(
+                                    "name" to nuevoProd.nombre,
+                                    "brand" to nuevoProd.marca,
+                                    "category" to nuevoProd.categoria,
+                                    "price" to nuevoProd.precio,
+                                    "imageUri" to nuevoProd.imageUri,
+                                    "storeName" to nuevoProd.storeName,
+                                    "barcode" to barcode
+                                )
+                                nodeRef.setValue(dataMap)
+                                    .addOnSuccessListener {
+                                        vibrateShort()
+                                        upsertQtyInCart(nuevoProd, 1, source = "scan_api")
+                                        Snackbar.make(
+                                            recycler,
+                                            "✅ Producto agregado y sincronizado: ${nuevoProd.nombre}",
+                                            Snackbar.LENGTH_LONG
+                                        ).setBackgroundTint(0xFF4CAF50.toInt()).show()
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Snackbar.make(
+                                            recycler,
+                                            "Error al guardar producto: ${e.localizedMessage}",
+                                            Snackbar.LENGTH_LONG
+                                        ).setBackgroundTint(0xFFF44336.toInt()).show()
+                                    }
+                            }
+                            .setNegativeButton("Cancelar", null)
+                            .show()
+                    }
+
+                } else {
+                    runOnUiThread {
+                        Snackbar.make(
+                            recycler,
+                            "⚠️ Código no encontrado en Open Food Facts.",
+                            Snackbar.LENGTH_LONG
+                        ).setBackgroundTint(0xFFF44336.toInt()).show()
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Snackbar.make(
+                        recycler,
+                        "Error al consultar OpenFoodFacts: ${e.message}",
+                        Snackbar.LENGTH_LONG
+                    ).setBackgroundTint(0xFFF44336.toInt()).show()
+                }
+            }
+        }.start()
+    }
+
+
+
+    /* ==================== CÁMARA ==================== */
     private fun ensureCameraPermissionThenOpen() {
-        val granted = ContextCompat.checkSelfPermission(
-            this, Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         if (granted) openCamera() else requestCameraPermission.launch(Manifest.permission.CAMERA)
     }
 
@@ -208,11 +403,7 @@ class CameraListActivity : AppCompatActivity() {
         }
         val photoFile = File(dir, "IMG_${System.currentTimeMillis()}.jpg")
         photoUri = try {
-            FileProvider.getUriForFile(
-                this,
-                "${applicationContext.packageName}.fileprovider",
-                photoFile
-            )
+            FileProvider.getUriForFile(this, "${applicationContext.packageName}.fileprovider", photoFile)
         } catch (e: Exception) {
             Snackbar.make(recycler, "Error FileProvider: ${e.message}", Snackbar.LENGTH_LONG).show()
             null
@@ -221,7 +412,7 @@ class CameraListActivity : AppCompatActivity() {
         takePicture.launch(photoUri)
     }
 
-    /* -------------------- Presupuesto -------------------- */
+    /* ==================== PRESUPUESTO / TOTALES ==================== */
     private fun leerPresupuesto(): Long {
         val spNew = getSharedPreferences(prefsNewName, Context.MODE_PRIVATE)
         val v = spNew.getLong(keyPresupuestoNew, 0L)
@@ -243,70 +434,102 @@ class CameraListActivity : AppCompatActivity() {
         tvRestante.setTextColor(if (restante < 0) 0xFFD32F2F.toInt() else 0xFF101828.toInt())
     }
 
-    /* -------------------- Catálogos (global + privado) -------------------- */
+    /* ==================== CATÁLOGOS (GLOBAL + PRIVADO) ==================== */
     private fun attachCatalogListeners() {
-        // Global
+        // --- Catálogo global (acepta llaves en inglés o español) ---
         val gRef = FirebaseRefs.catalogRef()
         globalCatalogListener = object : ValueEventListener {
             override fun onDataChange(s: DataSnapshot) {
                 globalCatalog.clear()
                 for (child in s.children) {
-                    val nombre = child.child("nombre").getValue(String::class.java).orEmpty()
+                    val nombre = child.child("name").getValue(String::class.java)
+                        ?: child.child("nombre").getValue(String::class.java).orEmpty()
                     if (nombre.isBlank()) continue
-                    val marca = child.child("marca").getValue(String::class.java).orEmpty()
-                    val categoria = child.child("categoria").getValue(String::class.java).orEmpty()
-                    val precio = child.child("precio").getValue(Long::class.java) ?: 0L
+
+                    val marca = child.child("brand").getValue(String::class.java)
+                        ?: child.child("marca").getValue(String::class.java).orEmpty()
+                    val categoria = child.child("category").getValue(String::class.java)
+                        ?: child.child("categoria").getValue(String::class.java).orEmpty()
+                    val precio = child.child("price").getValue(Long::class.java)
+                        ?: child.child("precio").getValue(Long::class.java) ?: 0L
                     val imageUri = child.child("imageUri").getValue(String::class.java)
-                    val p = CatalogProduct(nombre, marca, categoria, precio, imageUri)
+                    val storeName = child.child("storeName").getValue(String::class.java) // ✅ NUEVO
+
+                    val p = CatalogProduct(
+                        nombre = nombre,
+                        marca = marca,
+                        categoria = categoria,
+                        precio = precio,
+                        imageUri = imageUri,
+                        storeName = storeName // ✅ se conserva para futuras búsquedas
+                    )
+
                     globalCatalog[clave(p)] = p
                 }
                 refreshMergedCatalog()
             }
+
             override fun onCancelled(error: DatabaseError) {}
         }
         gRef.addValueEventListener(globalCatalogListener!!)
 
-        // Privado (mis productos)
+        // --- Catálogo privado del usuario ---
         val mRef = FirebaseRefs.myCatalogRef()
         myCatalogListener = object : ValueEventListener {
             override fun onDataChange(s: DataSnapshot) {
                 myCatalog.clear()
                 for (child in s.children) {
-                    val nombre = child.child("nombre").getValue(String::class.java).orEmpty()
+                    val nombre = child.child("nombre").getValue(String::class.java)
+                        ?: child.child("name").getValue(String::class.java).orEmpty()
                     if (nombre.isBlank()) continue
-                    val marca = child.child("marca").getValue(String::class.java).orEmpty()
-                    val categoria = child.child("categoria").getValue(String::class.java).orEmpty()
-                    val precio = child.child("precio").getValue(Long::class.java) ?: 0L
+
+                    val marca = child.child("marca").getValue(String::class.java)
+                        ?: child.child("brand").getValue(String::class.java).orEmpty()
+                    val categoria = child.child("categoria").getValue(String::class.java)
+                        ?: child.child("category").getValue(String::class.java).orEmpty()
+                    val precio = child.child("precio").getValue(Long::class.java)
+                        ?: child.child("price").getValue(Long::class.java) ?: 0L
                     val imageUri = child.child("imageUri").getValue(String::class.java)
-                    val p = CatalogProduct(nombre, marca, categoria, precio, imageUri)
+                    val lat = child.child("lat").getValue(Double::class.java)
+                    val lng = child.child("lng").getValue(Double::class.java)
+                    val address = child.child("address").getValue(String::class.java)
+                    val store = child.child("storeName").getValue(String::class.java)
+
+                    val p = CatalogProduct(
+                        nombre = nombre,
+                        marca = marca,
+                        categoria = categoria,
+                        precio = precio,
+                        imageUri = imageUri,
+                        lat = lat,
+                        lng = lng,
+                        address = address,
+                        storeName = store
+                    )
                     myCatalog[clave(p)] = p
                 }
                 refreshMergedCatalog()
             }
+
             override fun onCancelled(error: DatabaseError) {}
         }
         mRef.addValueEventListener(myCatalogListener!!)
     }
 
+
     /** Fusiona catálogo global + privado y actualiza búsqueda/adapter. */
     private fun refreshMergedCatalog() {
         catalogoLocal.clear()
-
-        // 1) primero los del catálogo privado (preferencia del usuario)
         catalogoLocal.addAll(myCatalog.values)
-
-        // 2) luego los globales que no estén duplicados por clave
-        for ((k, p) in globalCatalog) {
-            if (!myCatalog.containsKey(k)) catalogoLocal.add(p)
-        }
-
-        // Reaplicar filtro si había texto
+        for ((k, p) in globalCatalog) if (!myCatalog.containsKey(k)) catalogoLocal.add(p)
         val q = etBuscar.text?.toString()?.trim().orEmpty()
         filtrarCatalogo(q)
     }
 
     private fun filtrarCatalogo(query: String) {
         val q = query.trim().lowercase()
+
+        // 🔍 Filtra resultados por nombre, marca o categoría
         resultadosBusqueda =
             if (q.isEmpty()) emptyList()
             else catalogoLocal.filter {
@@ -314,10 +537,45 @@ class CameraListActivity : AppCompatActivity() {
                         it.marca.lowercase().contains(q) ||
                         it.categoria.lowercase().contains(q)
             }
+
+        // 📋 Actualiza la lista visible
         pushVisibles()
+
+        // 🧠 Ahora, si el usuario toca o agrega un producto desde búsqueda,
+        // nos aseguramos de que el producto conserve su storeName real del catálogo
+        adapter = ProductosAdapter(
+            onSumar = { p ->
+                val match = globalCatalog.values.firstOrNull {
+                    it.nombre.equals(p.nombre, true) && it.marca.equals(p.marca, true)
+                }
+                val productoFinal = if (match != null && !match.storeName.isNullOrBlank()) {
+                    p.copy(storeName = match.storeName)
+                } else {
+                    p
+                }
+                cambiarCantidad(productoFinal, +1)
+            },
+            onRestar = { p -> cambiarCantidad(p, -1) },
+            getCantidad = { p -> cantidades[clave(p)] ?: 0 },
+            format = nf,
+            onItemClick = { p ->
+                val match = globalCatalog.values.firstOrNull {
+                    it.nombre.equals(p.nombre, true) && it.marca.equals(p.marca, true)
+                }
+                val productoFinal = if (match != null && !match.storeName.isNullOrBlank()) {
+                    p.copy(storeName = match.storeName)
+                } else {
+                    p
+                }
+                upsertQtyInCart(productoFinal, (cantidades[clave(productoFinal)] ?: 0) + 1, source = "catalog")
+            }
+        )
+
+        recycler.adapter = adapter
     }
 
-    /* -------------------- Items (carrito) -------------------- */
+
+    /* ==================== ITEMS (CARRITO) ==================== */
     private fun attachItemsListener(ref: DatabaseReference) {
         itemsListener = object : ValueEventListener {
             override fun onDataChange(s: DataSnapshot) {
@@ -333,11 +591,15 @@ class CameraListActivity : AppCompatActivity() {
                     val qty = (itemSnap.child("qty").getValue(Int::class.java) ?: 0).coerceAtLeast(0)
 
                     val prodSnap = itemSnap.child("product")
-                    val nombre = prodSnap.child("nombre").getValue(String::class.java).orEmpty()
+                    val nombre = prodSnap.child("nombre").getValue(String::class.java)
+                        ?: prodSnap.child("name").getValue(String::class.java).orEmpty()
                     if (nombre.isBlank()) continue
-                    val marca = prodSnap.child("marca").getValue(String::class.java).orEmpty()
-                    val categoria = prodSnap.child("categoria").getValue(String::class.java).orEmpty()
-                    val precio = prodSnap.child("precio").getValue(Long::class.java) ?: 0L
+                    val marca = prodSnap.child("marca").getValue(String::class.java)
+                        ?: prodSnap.child("brand").getValue(String::class.java).orEmpty()
+                    val categoria = prodSnap.child("categoria").getValue(String::class.java)
+                        ?: prodSnap.child("category").getValue(String::class.java).orEmpty()
+                    val precio = prodSnap.child("precio").getValue(Long::class.java)
+                        ?: prodSnap.child("price").getValue(Long::class.java) ?: 0L
                     val imageUri = prodSnap.child("imageUri").getValue(String::class.java)
 
                     val p = CatalogProduct(nombre, marca, categoria, precio, imageUri)
@@ -363,14 +625,14 @@ class CameraListActivity : AppCompatActivity() {
         ref.addValueEventListener(itemsListener!!)
     }
 
-    /* -------------------- Lista visible -------------------- */
+    /* ==================== LISTA VISIBLE ==================== */
     private fun pushVisibles() {
         val q = etBuscar.text?.toString()?.trim().orEmpty()
         val nueva = if (q.isEmpty()) carritoActual.toList() else resultadosBusqueda.toList()
         recycler.post { adapter.submitList(nueva) }
     }
 
-    /* -------------------- Sumar / restar (UI optimista) -------------------- */
+    /* ==================== SUMAR / RESTAR ==================== */
     private fun cambiarCantidad(p: CatalogProduct, delta: Int) {
         val k = clave(p)
         val actual = cantidades[k] ?: 0
@@ -403,13 +665,12 @@ class CameraListActivity : AppCompatActivity() {
         gastado = total
         renderTotales()
 
-        // Persistir en RTDB
+        // Persistir
         upsertQtyInCart(p, targetQty = nuevo)
     }
 
-    /**
-     * Sube/actualiza la qty en RTDB. Si itemsRef no está listo, lo resuelve y reintenta.
-     */
+    /* ==================== PERSISTENCIA EN RTDB ==================== */
+    /** Crea o actualiza el item en la lista asegurando guardar storeName */
     private fun upsertQtyInCart(
         p: CatalogProduct,
         targetQty: Int,
@@ -428,6 +689,16 @@ class CameraListActivity : AppCompatActivity() {
         val k = clave(p)
         val existingKey = itemKeyByClave[k]
 
+        // ✅ siempre asegurar que tenga un storeName antes de guardar
+        val storeFinal = when {
+            !p.storeName.isNullOrBlank() -> p.storeName
+            !p.marca.isNullOrBlank() -> p.marca      // fallback si viene marca
+            p.categoria.contains("bebidas", true) -> "Éxito"
+            p.categoria.contains("snack", true) -> "Carulla"
+            else -> "Tienda Genérica"
+        }
+
+        // actualizar cantidad si ya existe
         if (existingKey != null) {
             val node = readyRef.child(existingKey)
             if (targetQty <= 0) node.removeValue()
@@ -435,18 +706,23 @@ class CameraListActivity : AppCompatActivity() {
             return
         }
 
+        // crear nuevo item si qty > 0
         if (targetQty <= 0) return
 
         val push = readyRef.push()
         val (lat, lng, addr) = extraLocation ?: Triple(Double.NaN, Double.NaN, "")
+
         val productMap = mutableMapOf<String, Any?>(
             "nombre" to p.nombre,
             "marca" to p.marca,
             "categoria" to p.categoria,
             "precio" to p.precio,
             "imageUri" to p.imageUri,
-            "source" to source
+            "source" to source,
+            "storeName" to storeFinal   // ✅ se garantiza aquí siempre
         )
+
+        // ubicación opcional (solo en items de origen "manual")
         if (lat.isFinite() && lng.isFinite()) {
             productMap["lat"] = lat
             productMap["lng"] = lng
@@ -457,6 +733,36 @@ class CameraListActivity : AppCompatActivity() {
         push.setValue(itemMap)
     }
 
-    /* -------------------- Helpers -------------------- */
+
+
+    private fun vibrateShort() {
+        try {
+            val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = this@CameraListActivity.getSystemService(VibratorManager::class.java)
+                vm?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                this@CameraListActivity.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            }
+
+            if (vibrator?.hasVibrator() == true) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator.vibrate(
+                        VibrationEffect.createOneShot(
+                            150,
+                            VibrationEffect.DEFAULT_AMPLITUDE
+                        )
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(150)
+                }
+            }
+        } catch (_: SecurityException) {
+            // No tiene permiso o hardware de vibración
+        } catch (_: Throwable) { }
+    }
+
+    /* ==================== HELPERS ==================== */
     private fun clave(p: CatalogProduct) = "${p.nombre}|${p.marca}"
 }

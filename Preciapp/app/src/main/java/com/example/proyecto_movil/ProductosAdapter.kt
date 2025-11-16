@@ -19,7 +19,8 @@ class ProductosAdapter(
     private val onSumar: (CatalogProduct) -> Unit,
     private val onRestar: (CatalogProduct) -> Unit,
     private val getCantidad: (CatalogProduct) -> Int,
-    private val format: NumberFormat
+    private val format: NumberFormat,
+    private val onItemClick: (CatalogProduct) -> Unit // 👈 nuevo callback
 ) : ListAdapter<CatalogProduct, ProductosAdapter.VH>(Diff) {
 
     object Diff : DiffUtil.ItemCallback<CatalogProduct>() {
@@ -50,11 +51,18 @@ class ProductosAdapter(
         h.tvPrecio.text = format.format(p.precio)
         h.tvCantidad.text = getCantidad(p).toString()
 
-        // Asegura que no haya íconos autoinyectados por tema
+        // Limpia íconos automáticos del tema Material
         h.btnMas.icon = null
         h.btnMenos.icon = null
 
+        // Acciones del stepper
         h.btnMas.setOnClickListener { onSumar(p) }
         h.btnMenos.setOnClickListener { onRestar(p) }
+
+        // 👇 NUEVO: detectar clic sobre todo el item (para agregar desde búsqueda)
+        h.itemView.setOnClickListener {
+            onItemClick(p)
+        }
     }
 }
+

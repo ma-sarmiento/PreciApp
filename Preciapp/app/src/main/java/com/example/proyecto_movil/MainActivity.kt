@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
@@ -16,8 +17,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 🔆 Forzar modo claro en toda la app
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)  // tu layout de login
+        setContentView(R.layout.activity_main)  // layout de login
 
         auth = FirebaseAuth.getInstance()
 
@@ -41,14 +45,13 @@ class MainActivity : AppCompatActivity() {
 
             auth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener {
-                    // 🔍 Aquí revisamos si la cuenta está desactivada antes de entrar a la app
+                    // 🔍 Verificar si la cuenta está desactivada
                     val uid = auth.currentUser!!.uid
                     FirebaseRefs.db().reference.child("users/$uid/profile/disabled")
                         .get()
                         .addOnSuccessListener { snap ->
                             val disabled = snap.getValue(Boolean::class.java) == true
                             if (disabled) {
-                                // Mostrar diálogo para reactivar
                                 AlertDialog.Builder(this)
                                     .setTitle("Cuenta desactivada")
                                     .setMessage("Tu cuenta está desactivada. ¿Deseas reactivarla ahora?")
@@ -71,7 +74,6 @@ class MainActivity : AppCompatActivity() {
                                     .setCancelable(false)
                                     .show()
                             } else {
-                                // Si no está desactivada, entrar normal
                                 goHome()
                             }
                         }
@@ -92,14 +94,10 @@ class MainActivity : AppCompatActivity() {
                 toast("Escribe tu correo para enviarte el enlace")
                 return@setOnClickListener
             }
-            auth.setLanguageCode("es") // correo en español
+            auth.setLanguageCode("es")
             auth.sendPasswordResetEmail(email)
-                .addOnSuccessListener {
-                    toast("Te enviamos un correo para restablecer la contraseña")
-                }
-                .addOnFailureListener { e ->
-                    toast("No pude enviar el correo: ${e.localizedMessage}")
-                }
+                .addOnSuccessListener { toast("Te enviamos un correo para restablecer la contraseña") }
+                .addOnFailureListener { e -> toast("No pude enviar el correo: ${e.localizedMessage}") }
         }
 
         // ---- Ir a registro ----
@@ -108,25 +106,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // 🔁 Si ya está logueado y la cuenta no está desactivada, entrar directo
     override fun onStart() {
         super.onStart()
-        // Si ya hay sesión iniciada, entra directo
-        if (FirebaseAuth.getInstance().currentUser != null) {
-            goHome()
-        }
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        val uid = user.uid
+        FirebaseRefs.db().reference.child("users/$uid/profile/disabled")
+            .get()
+            .addOnSuccessListener { snap ->
+                val disabled = snap.getValue(Boolean::class.java) == true
+                if (!disabled) goHome()
+            }
+            .addOnFailureListener {
+                // si falla la lectura, no forzamos navegación
+            }
     }
 
-    // ---- Ir a la pantalla principal ----
+    /** ▶️ Pantalla principal de la app */
     private fun goHome() {
-        startActivity(
-            Intent(this, Principal::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-        )
+        // Si tu pantalla principal se llama diferente, cámbiala aquí:
+        // Intent(this, CameraListActivity::class.java)
+        startActivity(Intent(this, Principal::class.java))
         finish()
     }
 
-    // ---- Helper para mensajes ----
-    private fun toast(msg: String) =
+    private fun toast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    }
 }

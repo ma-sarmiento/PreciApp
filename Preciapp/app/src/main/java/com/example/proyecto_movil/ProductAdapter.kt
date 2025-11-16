@@ -12,10 +12,10 @@ import java.util.Locale
 
 class ProductAdapter(
     private val items: MutableList<Product>,
-    private val onDeleteAt: (Int) -> Unit   // ✅ callback para eliminar en Firebase
+    private val onDeleteAt: (Int) -> Unit,          // 🗑️ callback para eliminar en Firebase
+    private val onItemClick: (Product) -> Unit      // 👈 nuevo callback para agregar al carrito
 ) : RecyclerView.Adapter<ProductAdapter.VH>() {
 
-    // Formateador de moneda COP
     private val nf = NumberFormat.getCurrencyInstance(Locale("es", "CO"))
 
     inner class VH(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -34,13 +34,12 @@ class ProductAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
 
-        // 🏷️ Nombre del producto
+        // 🏷️ Nombre y precio
         holder.tvName.text = item.name
-
-        // 💰 Precio formateado en COP (ej: $ 6.400)
         holder.tvPrice.text = nf.format(item.price)
+        holder.itemView.setOnClickListener { onItemClick(item) }
 
-        // 🖼️ Imagen del producto o placeholder
+        // 🖼️ Imagen o placeholder
         if (!item.imageUri.isNullOrEmpty()) {
             try {
                 holder.ivProduct.setImageURI(Uri.parse(item.imageUri))
@@ -51,9 +50,14 @@ class ProductAdapter(
             holder.ivProduct.setImageResource(R.drawable.ic_barcode)
         }
 
-        // 🗑️ Al hacer clic en la basurita → elimina de Firebase y de la lista
+        // 🗑️ Eliminar producto
         holder.ivDelete.setOnClickListener {
             onDeleteAt(holder.bindingAdapterPosition)
+        }
+
+        // 👆 Click general → agregar a carrito (mantiene storeName)
+        holder.itemView.setOnClickListener {
+            onItemClick(item)
         }
     }
 
@@ -65,7 +69,7 @@ class ProductAdapter(
         notifyItemInserted(items.lastIndex)
     }
 
-    /** Quitar producto localmente sin tocar Firebase (sólo si ya se eliminó en base) */
+    /** Quitar producto localmente (ya eliminado en base) */
     fun removeAt(position: Int) {
         if (position in items.indices) {
             items.removeAt(position)

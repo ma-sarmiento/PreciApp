@@ -14,7 +14,8 @@ import java.text.NumberFormat
 class CompararAdapter(
     private val format: NumberFormat,
     private val onMaxSelectionReached: () -> Unit,
-    private val onSelectionChanged: (Int) -> Unit
+    private val onSelectionChanged: (Int) -> Unit,
+    private val showPrice: Boolean = false // 👈 por defecto NO muestra precio
 ) : ListAdapter<CatalogProduct, CompararAdapter.VH>(Diff()) {
 
     private val selected = LinkedHashSet<CatalogProduct>()
@@ -46,20 +47,25 @@ class CompararAdapter(
     override fun onBindViewHolder(h: VH, position: Int) {
         val p = getItem(position)
 
-        // Asignar datos del producto
+        // Nombre y marca/categoría
         h.tvNombre.text = p.nombre
         h.tvMarca.text = "${p.marca} · ${p.categoria}"
-        h.tvPrecio.text = format.format(p.precio)
 
-        // Verificar si está seleccionado
+        // Mostrar u ocultar precio
+        if (showPrice) {
+            h.tvPrecio.visibility = View.VISIBLE
+            h.tvPrecio.text = format.format(p.precio)
+        } else {
+            h.tvPrecio.visibility = View.GONE
+        }
+
+        // Estado de selección
         val isSel = selected.contains(p)
         h.cb.isChecked = isSel
-
-        // Cambiar borde al estar seleccionado
         h.card.strokeWidth = if (isSel) 3 else 0
         h.card.strokeColor = 0xFF6B46C1.toInt() // morado
 
-        // Click para alternar selección
+        // Toggle selección
         h.itemView.setOnClickListener {
             if (isSel) {
                 selected.remove(p)
@@ -82,4 +88,3 @@ class CompararAdapter(
         override fun areContentsTheSame(a: CatalogProduct, b: CatalogProduct): Boolean = a == b
     }
 }
-

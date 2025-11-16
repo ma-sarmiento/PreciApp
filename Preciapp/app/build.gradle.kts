@@ -87,4 +87,9 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.google.code.gson:gson:2.11.0")
 
+    // ML Kit Barcode
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+// HTTP requests (ya tienes OkHttp y Gson, así que perfecto)
+
 }
