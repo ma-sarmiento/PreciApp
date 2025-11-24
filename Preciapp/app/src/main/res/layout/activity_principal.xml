@@ -6,22 +6,20 @@
     android:padding="16dp"
     android:background="#F7F4EF">
 
-
+    <!-- Avatar (menú superior derecha) -->
     <ImageView
         android:id="@+id/avatarIcon"
-    android:layout_width="42dp"
-    android:layout_height="42dp"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
         android:layout_marginTop="48dp"
-    android:layout_alignParentTop="true"
-    android:layout_alignParentEnd="true"
-    android:src="@drawable/avatar"
-    android:contentDescription="@string/avatar"
-    android:clickable="true"
-    android:focusable="true"
-    android:padding="4dp"
-    android:background="?attr/selectableItemBackgroundBorderless" />
-
-
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:src="@drawable/avatar"
+        android:contentDescription="@string/avatar"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless" />
 
     <!-- Logo -->
     <ImageView
@@ -136,6 +134,26 @@
         android:textAllCaps="false"
         android:textColor="#111827"
         app:icon="@android:drawable/ic_menu_directions"
+        app:iconGravity="textStart"
+        app:iconTint="@color/purple_500"
+        app:iconPadding="12dp"
+        app:iconSize="22dp"
+        app:cornerRadius="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1F2937"
+        app:backgroundTint="#FFFFFF" />
+
+    <!-- ⭐ Nuevo botón: Asistente Inteligente (IA) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonIA"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_below="@id/buttonVerRutaEficiente"
+        android:layout_marginTop="14dp"
+        android:text="Asistente Inteligente (IA)"
+        android:textAllCaps="false"
+        android:textColor="#111827"
+        app:icon="@android:drawable/ic_menu_info_details"
         app:iconGravity="textStart"
         app:iconTint="@color/purple_500"
         app:iconPadding="12dp"

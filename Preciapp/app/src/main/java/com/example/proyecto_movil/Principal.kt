@@ -30,7 +30,6 @@ class Principal : AppCompatActivity() {
         if (result.resultCode == RESULT_OK) {
             val url = result.data?.getStringExtra("updatedPhotoUrl")
             if (!url.isNullOrBlank()) {
-                // Actualiza la miniatura al instante (sin esperar a RTDB)
                 avatar.load(url) {
                     crossfade(true)
                     transformations(CircleCropTransformation())
@@ -62,6 +61,11 @@ class Principal : AppCompatActivity() {
             startActivity(Intent(this, CompararPreciosActivity::class.java))
         }
 
+        // ⭐ **Botón IA (AGREGADO)**
+        findViewById<MaterialButton>(R.id.buttonIA).setOnClickListener {
+            startActivity(Intent(this, IAActivity::class.java))
+        }
+
         // --- Avatar (miniatura + menú) ---
         avatar = findViewById(R.id.avatarIcon)
         avatar.isClickable = true
@@ -72,7 +76,6 @@ class Principal : AppCompatActivity() {
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.menu_ver_perfil -> {
-                        // Abrir VerPerfilActivity y esperar resultado (foto nueva)
                         editProfileLauncher.launch(Intent(this, VerPerfilActivity::class.java))
                         true
                     }
@@ -85,11 +88,10 @@ class Principal : AppCompatActivity() {
                         true
                     }
                     R.id.action_logout -> {
-                        // 1) Cerrar sesión
                         auth.signOut()
-                        // 2) Limpiar prefs locales (si usas)
-                        getSharedPreferences("prefs_cuenta", MODE_PRIVATE).edit().clear().apply()
-                        // 3) Ir a login y limpiar back stack
+                        getSharedPreferences("prefs_cuenta", MODE_PRIVATE)
+                            .edit().clear().apply()
+
                         val intent = Intent(this, MainActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         }
@@ -107,7 +109,6 @@ class Principal : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
 
-        // Seguridad: si no hay sesión, volver a login
         if (auth.currentUser == null) {
             val i = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -117,7 +118,6 @@ class Principal : AppCompatActivity() {
             return
         }
 
-        // Listener del perfil para mantener la miniatura sincronizada
         profileListener = object : ValueEventListener {
             override fun onDataChange(snap: DataSnapshot) {
                 val url = snap.child("photoUrl").getValue(String::class.java)
@@ -132,9 +132,8 @@ class Principal : AppCompatActivity() {
                     avatar.setImageResource(R.drawable.avatar)
                 }
             }
-            override fun onCancelled(error: DatabaseError) {
-                // opcional: log
-            }
+
+            override fun onCancelled(error: DatabaseError) {}
         }
         profileRef.addValueEventListener(profileListener!!)
     }
@@ -144,4 +143,3 @@ class Principal : AppCompatActivity() {
         profileListener?.let { profileRef.removeEventListener(it) }
     }
 }
-

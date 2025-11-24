@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F7F2FF"
+    android:padding="20dp">
+
+    <!-- ENCABEZADO -->
+    <LinearLayout
+        android:id="@+id/headerIA"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="32dp">
+
+        <ImageView
+            android:id="@+id/btnBackIA"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circle_background"
+            android:padding="10dp"
+            android:src="@drawable/ic_arrow_back"
+            android:contentDescription="@string/app_name"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/txtTituloIA"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:gravity="center"
+            android:text="Asistente Inteligente"
+            android:textColor="#4C2FAF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <!-- Espacio derecho para balance visual -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+    </LinearLayout>
+
+    <!-- BOTÓN GENERAR -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGenerar"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="24dp"
+        android:text="Generar recomendación"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#6A4CC3"
+        android:clickable="true"
+        android:focusable="true"
+        app:cornerRadius="22dp" />
+
+    <!-- TARJETA RESULTADO -->
+    <LinearLayout
+        android:id="@+id/cardResultado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:background="@drawable/rounded_box_white"
+        android:elevation="4dp"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <TextView
+            android:id="@+id/txtResultado"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aquí aparecerá la recomendación"
+            android:textColor="#333333"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+</LinearLayout>
