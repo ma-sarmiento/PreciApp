@@ -35,7 +35,7 @@
         android:id="@+id/appName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="PresiApp"
+        android:text="PreciApp"
         android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="#101828"
